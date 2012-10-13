@@ -4,46 +4,46 @@ var dgram = require('dgram'),
 UdpProxy.prototype = new events.EventEmitter;
 
 function UdpProxy (options) {
-
-    var self = this,
-        server = dgram.createSocket('udp4'),
-        client = dgram.createSocket('udp4'),
-        host = options.address || 'localhost',
-        port = options.port || 41235,
-        PORT = options.localport || 41234,
+    var proxy = this,
+        _server = dgram.createSocket('udp4'),
+        _client = dgram.createSocket('udp4'),
+        _host = options.address || 'localhost',
+        _port = options.port || 41235,
+        _PORT = options.localport || 41234,
+        _HOST = options.localaddress || '0.0.0.0',
         details = {
             target: {
-                address: host,
-                port: port,
+                address: _host,
+                port: _port,
             }
         };
 
-    server.on('message', function (msg, rinfo) {
-        self.emit('message', msg, rinfo);
-        client.send(msg, 0, msg.length, port, host, function(err, bytes) {});
+    _server.on('message', function (msg, rinfo) {
+        _client.send(msg, 0, msg.length, _port, _host, function(err, bytes) {});
+        proxy.emit('message', msg, rinfo);
     });
 
-    server.on('listening', function () {
-        details.server = server.address();
+    _server.on('listening', function () {
+        details.server = _server.address();
         process.nextTick(function () {
-            self.emit('listening', details);
+            proxy.emit('listening', details);
         });
     });
 
-    server.on('close', function () {
-        self.emit('close');
-        client.close();
+    _server.on('close', function () {
+        _client.close();
+        proxy.emit('close');
     });
 
-    server.on('error', function (err) {
-        self.emit('error', err);
-        server.close();
+    _server.on('error', function (err) {
+        _server.close();
+        proxy.emit('error', err);
     });
 
-    server.bind(PORT);
+    _server.bind(_PORT, _HOST);
 };
+
 
 exports.createServer = function (options) {
     return new UdpProxy(options);
 };
-
