@@ -1,17 +1,17 @@
-udp-proxy
-=========
+# udp-proxy
+
 by: ok 2012
 
 UDP-proxy for node.js
 
-Installation
-------------
+## Installation
+
 `npm install udp-proxy`
 
-Usage
-------
+## Usage
 
-Example:
+
+#### Example:
 
 ```
 var udpProxy = require('udp-proxy'),
@@ -38,22 +38,31 @@ udpProxyServer.on('error', function (err) {
 	console.log('Error!' + err);
 });
 ```
-Methods
--------
-_udpProxyServer = udpProxy.createServer(options);_
+### Methods
 
-- `.createServer(options)` creates a new udp-proxy with the given options.
+__udpProxyServer = udpProxy.createServer(__*options*__);__
 
-- `options` must be an object consisting of `address` *(string)* `port` *(number)* and `localport` *(number)*
+- .createServer(*options*) 
+  - creates an instance of udp-proxy with the given *options*
+    - *options* must be an *object* consisting of:
+      - `address`: __*string*__
+      - `port`: __*number*__
+      - `localport`: __*number*__
 
-Events
-------
-_udpProxyServer.on('`event`', function (*args*) {});_
+### Events
 
-- `listening` args: *details*
-  - *details* is an object containing *target* and *server* objects (address and port)
-- `message` args: *message*, *sender*
+__udpProxyServer.on(__`'event'`__, function (__*args*__) { });__
+
+- `'listening'`, *details*
+  - *details* is an object containing *target* and *server* *objects* both with:
+    - `address`: __*string*__
+    - `port`: __*number*__
+- `'message'`, *message*, *sender*
   - *message* is the actual payload
-  - *sender* is an object containing details about the sender
-- `error` args: *err*
-  - in case of an error
+  - *sender* is an object containing
+    - `address`: __*string*__
+    - `port`: __*number*__
+- `'error'`, *err*
+  - in case of an error *err* has the error-messages
+- `'close'`
+  - self-explanatory
