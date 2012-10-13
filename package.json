@@ -1,0 +1,21 @@
+{
+  "name": "udp-proxy",
+  "version": "0.0.1",
+  "description": "UDP Proxy for node.js",
+  "homepage": "https://github.com/gildean/node-udp-proxy",
+  "keywords": [
+    "node",
+    "udp",
+    "proxy"
+  ],
+  "author": "Olli Kankare (olli@salaliitto.com) <http://julkinen.salaliitto.com>",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/gildean/node-udp-proxy.git"
+  },
+  "bugs": {
+    "url": "http://github.com/gildean/node-udp-proxy/issues"
+  },
+  "engines": {
+    "node": "0.8.x"
+  }
