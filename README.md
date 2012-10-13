@@ -1,8 +1,12 @@
-node-udp-proxy
-==============
+udp-proxy
+=========
 by: ok 2012
 
 UDP-proxy for node.js
+
+Installation
+------------
+`npm install udp-proxy`
 
 Usage
 ------
@@ -34,13 +38,22 @@ udpProxyServer.on('error', function (err) {
 	console.log('Error!' + err);
 });
 ```
-`options` must be an object consisting of `address` *(string)* `port` *(number)* and `localport` *(number)*
+Methods
+-------
+_udpProxyServer = udpProxy.createServer(options);_
 
-`.createServer(options)` creates a new udp-proxy with the given options which emits these events:
+- `.createServer(options)` creates a new udp-proxy with the given options.
+
+- `options` must be an object consisting of `address` *(string)* `port` *(number)* and `localport` *(number)*
+
+Events
+------
+_udpProxyServer.on('`event`', function (*args*) {});_
+
 - `listening` args: *details*
   - *details* is an object containing *target* and *server* objects (address and port)
 - `message` args: *message*, *sender*
   - *message* is the actual payload
-  - *sender* is an objct containing details about the sender
+  - *sender* is an object containing details about the sender
 - `error` args: *err*
   - in case of an error
