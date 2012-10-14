@@ -1,12 +1,14 @@
 {
   "name": "udp-proxy",
-  "version": "0.1.0",
-  "description": "UDP Proxy for node.js",
+  "version": "0.1.1",
+  "description": "UDP-Proxy for node.js. Supports both IPv6 and v4 (and proxies between them)",
   "homepage": "https://github.com/gildean/node-udp-proxy",
   "keywords": [
     "node",
     "udp",
-    "proxy"
+    "proxy",
+    "IPv6",
+    "IPv4"
   ],
   "author": "Olli Kankare (olli@salaliitto.com) <http://julkinen.salaliitto.com>",
   "repository": {
