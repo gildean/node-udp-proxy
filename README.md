@@ -1,6 +1,6 @@
 # udp-proxy
 
-by: ok 2012
+v.0.1.2 by: ok 2012
 
 
 UDP-proxy for [node.js](http://nodejs.org/)
@@ -32,6 +32,7 @@ var proxy = require('udp-proxy'),
 		localipv6: false,
 		proxyaddress: '::0'
 	},
+	// this is just some ascii
 	rs = '\x1B[0m',    
     bd = '\x1B[1m',
     cn = '\x1B[36m',
@@ -72,8 +73,10 @@ server.on('error', function (err) {
 });
 ```
 ### Methods
+__var proxy = require('udp-proxy');__
+* requires the proxy-module
 
-__udpProxyServer = udpProxy.createServer(__*options*__);__
+__var server = proxy.createServer(__*options*__);__
 
 * __.createServer(__*options*__)__ creates an instance of udp-proxy with the given *options*
 	* *options* must be an *object* consisting of:
@@ -96,7 +99,7 @@ __udpProxyServer = udpProxy.createServer(__*options*__);__
 
 ### Events
 
-__udpProxyServer.on(__`'event'`__, function (__*args*__) { });__
+__server.on(__`'event'`__, function (__*args*__) { });__
 
 * `'listening'`, *details*
   * *details* is an *object* with two objects:
