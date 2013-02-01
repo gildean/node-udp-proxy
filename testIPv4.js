@@ -3,25 +3,24 @@
 	// Let's create a DNS-proxy that proxies IPv4 udp-requests to googles IPv6 DNS-server
 	var proxy = require('./index'),
 		util = require('util'),
-		memgraph = require('memgraph')('udp-proxy', 8053),
 		platform = require('os').platform(),
 		options = {
-			address: '2001:4860:4860::8888',
+			address: '8.8.8.8',
 			port: 53,
-			ipv6: true,
+			ipv6: false,
 			localaddress: '127.0.0.1',
 			localport: 5353,
 			localipv6: false,
-			proxyaddress: '::0',
+			proxyaddress: '0.0.0.0',
 			timeOutTime: 10000
 		},
 		mitmOptions = {
 			address: '127.0.0.1',
 			port: 5353,
 			ipv6: false,
-			localaddress: '::1',
+			localaddress: '0.0.0.0',
 			localport: 5354,
-			localipv6: true,
+			localipv6: false,
 			proxyaddress: '127.0.0.1',
 			timeOutTime: 10000
 		};
@@ -31,7 +30,7 @@
 	var mitm = proxy.createServer(mitmOptions);
 	// Show some info when the server starts
 	server.on('listening', function (details) {
-		util.log(' * IPv4 to IPv6  proxy * | by : | ok:2012');
+		util.log(' * IPv4 to IPv4  proxy * | by : | ok:2012');
 		util.log('              running on | os : | ' + platform);
 		util.log('   proxy-server ready on | ' + details.server.family + ' | ' + details.server.address + ':' + details.server.port);
 		util.log(' traffic is forwarded to | ' + details.target.family + ' | ' + details.target.address + ':' + details.target.port);
@@ -56,6 +55,7 @@
 	server.on('message', function (message, sender) {
 		util.log('            message from | ' + sender.family + ' | ' + sender.address + ':' + sender.port);
 	});
+
 	mitm.on('message', function (message, sender) {
 		util.log('        mitmmessage from | ' + sender.family + ' | ' + sender.address + ':' + sender.port);
 	});
@@ -69,16 +69,16 @@
 		util.log('     answer to mitm from | ' + sender.family + ' | ' + sender.address + ':' + sender.port);
 	});
 
-	server.on('proxyClose', function (details) {
-		util.log('      disconnecting from | ' + details.peer.family + ' | ' + details.peer.address + ':' + details.peer.port);
+	server.on('proxyClose', function (peer) {
+		util.log('      disconnecting from | ' + peer.family + ' | ' + peer.address + ':' + peer.port);
 	});
 
-	mitm.on('proxyClose', function (details) {
-		util.log(' mitm disconnecting from | ' + details.peer.family + ' | ' + details.peer.address + ':' + details.peer.port);
-	});  
+	mitm.on('proxyClose', function (peer) {
+		util.log(' mitm disconnecting from | ' + peer.family + ' | ' + peer.address + ':' + peer.port);
+	});
 
 	server.on('proxyError', function (err) {
-		util.log('             ProxyError! | ' + err);
+		util.log('             ProxyError! | ' + err.message);
 	});
 
 	server.on('close', function () {
@@ -86,11 +86,23 @@
 	});
 
 	server.on('error', function (err) {
-		util.log('                  Error! | ' + err);
+		util.log('                  Error! | ' + err.message);
+	});
+
+	mitm.on('proxyError', function (err) {
+		util.log('         mitmProxyError! | ' + err.message);
+	});
+
+	mitm.on('close', function () {
+		util.log('      mitm disconnected! | ');
+	});
+
+	mitm.on('error', function (err) {
+		util.log('              mitmError! | ' + err.message);
 	});
 
 	(function () {
-		var exec = require('child_process').exec, 
+		var exec = require('child_process').exec,
 			i = 1,
 			testTimes = 10;
 		(function testIt(i) {
@@ -107,14 +119,14 @@
 					testIt(i += 1);
 				} else {
 					util.log('      test Complete!     | ');
-					util.log('you can still connect to | IPv6 | ::1:5354 | IPv4 | 127.0.0.1:5353' );
+					util.log('you can still connect to | IPv4 | 127.0.0.1:5354 | IPv4 | 127.0.0.1:5353' );
 					//process.exit();
 				}
 			};
 			if (platform === 'win32') {
-				query = exec('nslookup -p=5354 /server ::1 –q=aaaa google.com', printOut);
+				query = exec('nslookup -p=5354 /server 127.0.0.1 –q=aaaa google.com', printOut);
 			} else {
-				query = exec('dig -p 5354 +short @::1 google.com aaaa', printOut)
+				query = exec('dig -p 5354 +short @127.0.0.1 google.com aaaa', printOut);
 			}
 		}(i));
 	}());

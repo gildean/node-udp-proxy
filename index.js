@@ -21,16 +21,12 @@ var UdpProxy = function (options) {
     if (options.ipv6) {
         udp = 'udp6';
         family = 'IPv6';
-        proxyHost = '::0';
+        proxyHost = net.isIPv6(options.proxyaddress) ? options.proxyaddress : '::0';
     }
 
     if (options.localipv6) {
         localudp = 'udp6';
-        if (net.isIPv6(options.localaddress)) {
-            localHost = options.localaddress;
-        } else {
-            localHost = '::0';
-        }
+        localHost = net.isIPv6(options.localaddress) ? options.localaddress : '::0';
     }
 
     function getDetails() {
@@ -72,9 +68,9 @@ var UdpProxy = function (options) {
         _client.on('listening', function () {
         
             var details = getDetails();
-            this.peer = sender;
             details.route = _client.address();
             details.peer = sender;
+            this.peer = sender;
         
             proxy.emit('bound', details);
             
@@ -91,27 +87,29 @@ var UdpProxy = function (options) {
         
         //client
         }).on('close', function () {
-            proxy.emit('proxyClose', connections[senderD]);
+            proxy.emit('proxyClose', _client.peer);
             delete connections[senderD];
         
         //client
         }).on('error', function (err) {
             
-            _client.close();
-        
+            this.close();
             proxy.emit('proxyError', err);
 
-        //client
-        }).bind(0, proxyHost);
+        });
+        if (!_client._bound) {
+            _client.bind(0, proxyHost);
+        }
 
         _client.send(msg, 0, msg.length, port, host, function (err, bytes) {
-            
             if (err) {
                 proxy.emit('proxyError', err);
             }
-            this.t = setTimeout(function () {
-                _client.close();
-            }, tOutTime);
+            if (!_client.t || !_client.t.ontimeout) {
+                _client.t = setTimeout(function () {
+                    _client.close();
+                }, tOutTime);
+            }
         
         });
         
