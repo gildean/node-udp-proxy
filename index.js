@@ -60,6 +60,17 @@ var UdpProxy = function (options) {
         if (senderD in connections) {
             _client = connections[senderD];
             clearTimeout(_client.t);
+            
+             //removing previous listeners for the existing client
+            if(_client.listeners('listening'))
+                _client.removeListener('listening');
+            if(_client.listeners('message'))
+                _client.removeListener('message');
+             if(_client.listeners('close'))
+                _client.removeListener('close');
+             if(_client.listeners('error'))
+                _client.removeListener('error');
+            
         } else {
             _client = dgram.createSocket(udp);
             connections[senderD] = _client;
