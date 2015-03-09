@@ -1,144 +1,116 @@
-var dgram = require('dgram'),
-    events = require('events'),
-    util = require('util'),
-    net = require('net');
+var dgram = require('dgram');
+var events = require('events');
+var util = require('util');
+var net = require('net');
 
 var UdpProxy = function (options) {
     "use strict";
-    var proxy = this,
-        udp = 'udp4',
-        localudp = 'udp4',
-        family = 'IPv4',
-        localfamily = 'IPv4',
-        host = options.address || 'localhost',
-        port = options.port || 41234,
-        localPort = options.localport || 0,
-        localHost = options.localaddress || '0.0.0.0',
-        proxyHost = options.proxyaddress || '0.0.0.0',
-        tOutTime = options.timeOutTime || 10000,
-        connections = {};
-
+    var proxy = this;
+    var localUdpType = 'udp4';
+    var localfamily = 'IPv4';
+    var serverPort = options.localport || 0;
+    var serverHost = options.localaddress || '0.0.0.0';
+    var proxyHost = options.proxyaddress || '0.0.0.0';
+    this.tOutTime = options.timeOutTime || 10000;
+    this.family = 'IPv4';
+    this.udpType = 'udp4';
+    this.host = options.address || 'localhost';
+    this.port = options.port || 41234;
+    this.connections = {};
     if (options.ipv6) {
-        udp = 'udp6';
-        family = 'IPv6';
+        this.udpType = 'udp6';
+        this.family = 'IPv6';
         proxyHost = net.isIPv6(options.proxyaddress) ? options.proxyaddress : '::0';
     }
-
+    this._details = {
+        target: {
+            address: this.host,
+            family: this.family,
+            port: this.port
+        }
+    };
+    this._detailKeys = Object.keys(this._details);
     if (options.localipv6) {
-        localudp = 'udp6';
-        localHost = net.isIPv6(options.localaddress) ? options.localaddress : '::0';
+        localUdpType = 'udp6';
+        serverHost = net.isIPv6(options.localaddress) ? options.localaddress : '::0';
     }
-
-    function getDetails() {
-        return {
-            target: {
-                address: host,
-                family: family,
-                port: port
-            }
-        };
-    }
-
-    function hashD(address) {
-        return (address.address + address.port).replace(/\./g, '');
-    }
-
-    var _server = dgram.createSocket(localudp);
-
-    _server.on('listening', function () {
-        
-        var details = getDetails();
-        details.server = _server.address();
-        process.nextTick(function() {
+    this._server = dgram.createSocket(localUdpType);
+    this._server.on('listening', function () {
+        var details = proxy.getDetails({server: this.address()});
+        setImmediate(function() {
             proxy.emit('listening', details);
         });
-
     }).on('message', function (msg, sender) {
-        var details = getDetails(),
-            senderD = hashD(sender),
-            _client, _clientport;
-        if (senderD in connections) {
-            _client = connections[senderD];
-            clearTimeout(_client.t);
-            
-             //removing previous listeners for the existing client
-            if(_client.listeners('listening'))
-                _client.removeListener('listening');
-            if(_client.listeners('message'))
-                _client.removeListener('message');
-             if(_client.listeners('close'))
-                _client.removeListener('close');
-             if(_client.listeners('error'))
-                _client.removeListener('error');
-            
-        } else {
-            _client = dgram.createSocket(udp);
-            connections[senderD] = _client;
-        }
-        
-        _client.on('listening', function () {
-        
-            var details = getDetails();
-            details.route = _client.address();
-            details.peer = sender;
-            this.peer = sender;
-        
-            proxy.emit('bound', details);
-            
-         //client
-         }).on('message', function (msg, sender) {
-        
-            _server.send(msg, 0, msg.length, _client.peer.port, _client.peer.address, function (err, bytes) {
-                if (err) {
-                    proxy.emit('proxyError', err);
-                }
-            });
-        
-            proxy.emit('proxyMsg', msg, sender);
-        
-        //client
-        }).on('close', function () {
-            proxy.emit('proxyClose', _client.peer);
-            delete connections[senderD];
-        
-        //client
-        }).on('error', function (err) {
-            
-            this.close();
-            proxy.emit('proxyError', err);
-
-        });
-        if (!_client._bound) {
-            _client.bind(0, proxyHost);
-        }
-
-        _client.send(msg, 0, msg.length, port, host, function (err, bytes) {
-            if (err) {
-                proxy.emit('proxyError', err);
-            }
-            if (!_client.t || !_client.t.ontimeout) {
-                _client.t = setTimeout(function () {
-                    _client.close();
-                }, tOutTime);
-            }
-        
-        });
-        
-        proxy.emit('message', msg, sender);
-
+        var client = proxy.createClient(msg, sender);
+        if (!client._bound) client.bind(0, proxyHost);
+        else client.emit('send', msg, sender);
     }).on('error', function (err) {
-    
-        _server.close();
+        this.close();
         proxy.emit('error', err);
-    
     }).on('close', function () {
-    
         proxy.emit('close');
-    
-    }).bind(localPort, localHost);
+    }).bind(serverPort, serverHost);
 };
 
 util.inherits(UdpProxy, events.EventEmitter);
+
+UdpProxy.prototype.getDetails = function getDetails(initialObj) {
+    var self = this;
+    return this._detailKeys.reduce(function (obj, key) {
+        obj[key] = self._details[key];
+        return obj;
+    }, initialObj);
+};
+
+UdpProxy.prototype.hashD = function hashD(address) {
+    return (address.address + address.port).replace(/\./g, '');
+};
+
+UdpProxy.prototype.send = function send(msg, port, address, callback) {
+    this._server.send(msg, 0, msg.length, port, address, callback);
+};
+
+UdpProxy.prototype.createClient = function createClient(msg, sender) {
+    var senderD = this.hashD(sender);
+    var proxy = this;
+     if (this.connections.hasOwnProperty(senderD)) {
+        client = this.connections[senderD];
+        clearTimeout(client.t);
+        client.t = null;
+        return client;
+    }
+    client = dgram.createSocket(this.udpType);
+    client.once('listening', function () {
+        var details = proxy.getDetails({route: this.address(), peer: sender});
+        this.peer = sender;
+        this._bound = true;
+        proxy.emit('bound', details);
+        this.emit('send', msg, sender);
+    }).on('message', function (msg, sender) {
+        proxy.send(msg, this.peer.port, this.peer.address, function (err, bytes) {
+            if (err) proxy.emit('proxyError', err);
+        });
+        proxy.emit('proxyMsg', msg, sender);
+    }).on('close', function () {
+        proxy.emit('proxyClose', this.peer);
+        this.removeAllListeners();
+        delete proxy.connections[senderD];
+    }).on('error', function (err) {
+        this.close();
+        proxy.emit('proxyError', err);
+    }).on('send', function (msg, sender) {
+        var self = this;
+        proxy.emit('message', msg, sender);
+        this.send(msg, 0, msg.length, proxy.port, proxy.host, function (err, bytes) {
+            if (err) proxy.emit('proxyError', err);
+            if (!self.t) self.t = setTimeout(function () {
+                self.close();
+            }, proxy.tOutTime);
+        });
+    });
+    this.connections[senderD] = client;
+    return client;
+};
 
 exports.createServer = function (options) {
     return new UdpProxy(options);

@@ -1,24 +1,24 @@
 {
-  "name": "udp-proxy",
-  "version": "0.2.1",
-  "description": "UDP-Proxy for node.js. Supports both IPv6 and v4 (and proxies between them)",
-  "homepage": "https://github.com/gildean/node-udp-proxy",
-  "keywords": [
-    "node",
-    "udp",
-    "proxy",
-    "IPv6",
-    "IPv4"
-  ],
-  "author": "Olli Kankare (olli@salaliitto.com) <http://julkinen.salaliitto.com>",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/gildean/node-udp-proxy.git"
-  },
-  "bugs": {
-    "url": "http://github.com/gildean/node-udp-proxy/issues"
-  },
-  "engines": {
-    "node": "0.8.x"
-  }
+    "name": "udp-proxy",
+    "version": "1.0.0",
+    "description": "UDP-Proxy for node.js. Supports both IPv6 and v4 (and proxies between them)",
+    "homepage": "https://github.com/gildean/node-udp-proxy",
+    "keywords": [
+        "node",
+        "udp",
+        "proxy",
+        "IPv6",
+        "IPv4"
+    ],
+    "author": "Olli Kankare <olli@salaliitto.com>",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/gildean/node-udp-proxy.git"
+    },
+    "bugs": {
+        "url": "http://github.com/gildean/node-udp-proxy/issues"
+    },
+    "engines": {
+        "node" : ">=0.10.x"
+    }
 }
