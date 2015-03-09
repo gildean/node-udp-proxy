@@ -1,6 +1,6 @@
 {
     "name": "udp-proxy",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "UDP-Proxy for node.js. Supports both IPv6 and v4 (and proxies between them)",
     "homepage": "https://github.com/gildean/node-udp-proxy",
     "keywords": [

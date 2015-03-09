@@ -1,10 +1,6 @@
 # udp-proxy
 
-##v.0.2.1
-###by: ok 2013
-
-
-UDP-proxy for [node.js](http://nodejs.org/)
+UDP-proxy for [node.js](http://nodejs.org/) version >= 0.10.x (for eariler node versions, use version 0.2.1)
 
 
 Supports both IPv6 and IPv4, and bridging in between (see example below).
