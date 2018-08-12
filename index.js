@@ -34,6 +34,7 @@ var UdpProxy = function (options) {
         localUdpType = 'udp6';
         serverHost = net.isIPv6(options.localaddress) ? options.localaddress : '::0';
     }
+    this.middleware = options.middleware;
     this._server = dgram.createSocket(localUdpType);
     this._server.on('listening', function () {
         var details = proxy.getDetails({server: this.address()});
@@ -87,10 +88,15 @@ UdpProxy.prototype.createClient = function createClient(msg, sender) {
         proxy.emit('bound', details);
         this.emit('send', msg, sender);
     }).on('message', function (msg, sender) {
-        proxy.send(msg, this.peer.port, this.peer.address, function (err, bytes) {
-            if (err) proxy.emit('proxyError', err);
-        });
-        proxy.emit('proxyMsg', msg, sender);
+        if (proxy.middleware) {
+            var self = this;
+            proxy.middleware.proxyMsg(msg, sender, this.peer, function (msg,sender,peer) {
+                proxy.handleProxyMsg(self, proxy, msg, sender, peer);
+            });
+        }
+        else {
+            proxy.handleProxyMsg(this, proxy, msg, sender, this.peer);
+        }
     }).on('close', function () {
         proxy.emit('proxyClose', this.peer);
         this.removeAllListeners();
@@ -99,17 +105,35 @@ UdpProxy.prototype.createClient = function createClient(msg, sender) {
         this.close();
         proxy.emit('proxyError', err);
     }).on('send', function (msg, sender) {
-        var self = this;
-        proxy.emit('message', msg, sender);
-        this.send(msg, 0, msg.length, proxy.port, proxy.host, function (err, bytes) {
-            if (err) proxy.emit('proxyError', err);
-            if (!self.t) self.t = setTimeout(function () {
-                self.close();
-            }, proxy.tOutTime);
-        });
+        if (proxy.middleware) {
+            var self = this;
+            proxy.middleware.message(msg, sender, function (msg,sender) {
+                proxy.handleMessage(self, proxy, msg, sender);
+            });
+        }
+        else {
+            proxy.handleMessage(this, proxy, msg, sender);
+        }
     });
     this.connections[senderD] = client;
     return client;
+};
+
+UdpProxy.prototype.handleProxyMsg = function handleProxyMsg(socket, proxy, msg, sender, peer) {
+    proxy.send(msg, peer.port, peer.address, function (err, bytes) {
+        if (err) socket.emit('proxyError', err);
+    });
+    proxy.emit('proxyMsg', msg, sender, peer);
+};
+
+UdpProxy.prototype.handleMessage = function handleMessage(socket, proxy, msg, sender) {
+    proxy.emit('message', msg, sender);
+    socket.send(msg, 0, msg.length, proxy.port, proxy.host, function (err, bytes) {
+        if (err) proxy.emit('proxyError', err);
+        if (!socket.t) socket.t = setTimeout(function () {
+            socket.close();
+        }, proxy.tOutTime);
+    });
 };
 
 exports.createServer = function (options) {
