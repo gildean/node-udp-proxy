@@ -53,7 +53,7 @@ server.on('message', function (message, sender) {
 });
 
 // 'proxyMsg' is emitted when the bound socket gets a message and it's send back to the peer the socket was bound to
-server.on('proxyMsg', function (message, sender) {
+server.on('proxyMsg', function (message, sender, peer) {
 	console.log('answer from ' + sender.address + ':' + sender.port);
 });
 
@@ -97,7 +97,7 @@ __var server = proxy.createServer(__ *options* __);__
 	     - default: __*10000*__ (10s)
 	  * `timeOutTime`: __*number*__ the time it takes for socket to time out (in ms)
 	     - default: __*10000*__ (10s)
-     * `middleware`: __*object*__ apply a middleware to the proxy, see Middleware section below.
+	  * `middleware`: __*object*__ apply a middleware to the proxy, see Middleware section below.
 	     - default: __*none*__
                
 *the proxy always connects outwards with a random port*
