@@ -53,7 +53,7 @@ server.on('message', function (message, sender) {
 });
 
 // 'proxyMsg' is emitted when the bound socket gets a message and it's send back to the peer the socket was bound to
-server.on('proxyMsg', function (message, sender) {
+server.on('proxyMsg', function (message, sender, peer) {
 	console.log('answer from ' + sender.address + ':' + sender.port);
 });
 
@@ -95,7 +95,11 @@ __var server = proxy.createServer(__ *options* __);__
 	     - default: __*0.0.0.0*__ ( __*::0*__ if `ipv6` is set to true)
 	  * `timeOutTime`: __*number*__ the time it takes for socket to time out (in ms)
 	     - default: __*10000*__ (10s)
-
+	  * `timeOutTime`: __*number*__ the time it takes for socket to time out (in ms)
+	     - default: __*10000*__ (10s)
+	  * `middleware`: __*object*__ apply a middleware to the proxy, see Middleware section below.
+	     - default: __*none*__
+               
 *the proxy always connects outwards with a random port*
 
 ## Events
@@ -107,15 +111,16 @@ __server.on(__ `'event'` __, function (__ *args* __) { });__
      * *target* __address__
      * *server* __address__
 * `'bound'`, *details*
-  * *details* is an *object* with two objects: 
+  * *details* is an *object* with two objects:
      * *route* __address__
      * *peer* __address__
 * `'message'`, *message*, *sender*
   * *message* is the payload from user using the proxy
   * *sender* is the user __address__
-* `'proxyMsg'`, *message*, *sender*
+* `'proxyMsg'`, *message*, *sender*, *peer*
   * *message* is the answer to the message from the user
   * *sender* is the answerer __address__
+  * *peer* is the requesting __address__
 * `'error'`, *err*
   * in case of an error *err* has the error-messages
 * `'proxyError'`, *err*
@@ -132,6 +137,53 @@ __address__ *object* contains:
 * `address`: __*string*__ ip-address
 * `family`: __*string*__ IPv6 or IPv4
 * `port`: __*number*__ udp-port
+
+## Middleware
+Add a middleware object to the proxy to intercept any incoming or outgoing message. Use this if you need to potentially change the message content before it is relayed, or prevent it from sending altogether.
+
+The `middleware` object must contain the following functions:
+
+__message(__ `msg`, `sender`__, function `next` (__ *msg, sender* __) { });__
+
+* will be invoked with every message from a peer `sender`  to the server.
+* proxy will only relay the message when `next`is invoked.
+
+__proxyMsg(__ `msg`, `sender`, `peer`__, function `next` (__ *msg, sender, peer* __) { });__
+
+* will be invoked with every message from the server `sender` to a `peer`.
+* proxy will only relay the message when `next`is invoked.
+
+### Example:
+The following example will block any message going from the client to the server that has length > 120.
+```javascript
+// Following the first example, let's create a DNS-proxy that proxies IPv4 udp-requests to googles IPv6 DNS-server and provide a middleware.
+var proxy = require('udp-proxy'),
+   options = {
+      address: '2001:4860:4860::8888',
+      port: 53,
+      ipv6: true,
+      localaddress: '0.0.0.0',
+      localport: 53535,
+      localipv6: false,
+      proxyaddress: '::0',
+      timeOutTime: 10000,
+      middleware: {
+         message: function(msg, sender, next) {
+           // messages with longer length will not be relayed, because 'next' will not be invoked.
+           if (msg.length <= 120) {
+              next(msg, sender);
+           }
+         },
+         proxyMsg: function(msg, sender, peer, next) {
+           next(msg, sender, peer);
+         }
+      }
+   };
+
+var server = proxy.createServer(options);
+
+// ..
+```
 
 ## Tests
 
