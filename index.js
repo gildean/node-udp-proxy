@@ -7,7 +7,6 @@ var UdpProxy = function (options) {
     "use strict";
     var proxy = this;
     var localUdpType = 'udp4';
-    var localfamily = 'IPv4';
     var serverPort = options.localport || 0;
     var serverHost = options.localaddress || '0.0.0.0';
     var proxyHost = options.proxyaddress || '0.0.0.0';
@@ -54,6 +53,22 @@ var UdpProxy = function (options) {
 };
 
 util.inherits(UdpProxy, events.EventEmitter);
+
+UdpProxy.prototype.close = function close(cb) {
+  // close clients
+  for (var senderD in this.connections) {
+    if (this.connections.hasOwnProperty(senderD)) {
+      var client = this.connections[senderD];
+      if (client.t) {
+        clearTimeout(client.t);
+        client.t = null;
+        client.close();
+      }
+    }
+  }
+  this.connections = {};
+  this._server.close(cb);
+};
 
 UdpProxy.prototype.getDetails = function getDetails(initialObj) {
     var self = this;
