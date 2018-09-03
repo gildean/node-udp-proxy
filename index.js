@@ -74,7 +74,8 @@ UdpProxy.prototype.send = function send(msg, port, address, callback) {
 UdpProxy.prototype.createClient = function createClient(msg, sender) {
     var senderD = this.hashD(sender);
     var proxy = this;
-     if (this.connections.hasOwnProperty(senderD)) {
+    var client;
+    if (this.connections.hasOwnProperty(senderD)) {
         client = this.connections[senderD];
         clearTimeout(client.t);
         client.t = null;
