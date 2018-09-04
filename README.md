@@ -102,6 +102,8 @@ __var server = proxy.createServer(__ *options* __);__
                
 *the proxy always connects outwards with a random port*
 
+__server.close(callback)__ closes proxy server.
+
 ## Events
 
 __server.on(__ `'event'` __, function (__ *args* __) { });__
