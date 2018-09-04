@@ -13,17 +13,17 @@ var options = {
     port: 53,
     ipv6: true,
     localaddress: '127.0.0.1',
-    localport: 5353,
+    localport: 5354,
     localipv6: false,
     proxyaddress: '::0',
     timeOutTime: 10000
 };
 var mitmOptions = {
     address: '127.0.0.1',
-    port: 5353,
+    port: 5354,
     ipv6: false,
     localaddress: '::1',
-    localport: 5354,
+    localport: 5355,
     localipv6: true,
     proxyaddress: '127.0.0.1',
     timeOutTime: 10000
@@ -107,14 +107,16 @@ function testIt(times) {
             testIt(times + 1);
         }
         if (allTestsComplete === expectedComplete) {
-            util.log('      test Complete!     | ');
-            util.log('you can still connect to | IPv6 | ::1:5354 | IPv4 | 127.0.0.1:5353' );
+            mitm.close();
+            server.close(function () {
+                util.log('      test Complete!     | ');
+            });
         }
     };
     if (platform === 'win32') {
-        query = exec('nslookup -p=5354 /server ::1 –q=aaaa google.com', printOut);
+        query = exec('nslookup -p=5355 /server ::1 –q=aaaa google.com', printOut);
     } else {
-        query = exec('dig -p 5354 +short @::1 google.com aaaa', printOut);
+        query = exec('dig -p 5355 +short @::1 google.com aaaa', printOut);
     }
 }
 while (parallelism) {

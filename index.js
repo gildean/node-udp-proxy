@@ -54,22 +54,6 @@ var UdpProxy = function (options) {
 
 util.inherits(UdpProxy, events.EventEmitter);
 
-UdpProxy.prototype.close = function close(cb) {
-  // close clients
-  for (var senderD in this.connections) {
-    if (this.connections.hasOwnProperty(senderD)) {
-      var client = this.connections[senderD];
-      if (client.t) {
-        clearTimeout(client.t);
-        client.t = null;
-        client.close();
-      }
-    }
-  }
-  this.connections = {};
-  this._server.close(cb);
-};
-
 UdpProxy.prototype.getDetails = function getDetails(initialObj) {
     var self = this;
     return this._detailKeys.reduce(function (obj, key) {
@@ -150,6 +134,22 @@ UdpProxy.prototype.handleMessage = function handleMessage(socket, proxy, msg, se
             socket.close();
         }, proxy.tOutTime);
     });
+};
+
+
+UdpProxy.prototype.close = function close(callback) {
+    // close clients
+    var proxyConnections = this.connections;
+    Object.keys(proxyConnections).forEach(function (senderD) {
+        var client = proxyConnections[senderD];
+        if (client.t) {
+            clearTimeout(client.t);
+            client.t = null;
+            client.close();
+        }
+    });
+    this.connections = {};
+    this._server.close(callback || function () {});
 };
 
 exports.createServer = function (options) {
