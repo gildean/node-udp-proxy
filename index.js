@@ -63,7 +63,7 @@ UdpProxy.prototype.getDetails = function getDetails(initialObj) {
 };
 
 UdpProxy.prototype.hashD = function hashD(address) {
-    return (address.address + address.port).replace(/\./g, '');
+    return address.address + '_' + address.port;
 };
 
 UdpProxy.prototype.send = function send(msg, port, address, callback) {
